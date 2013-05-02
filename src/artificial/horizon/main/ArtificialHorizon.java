@@ -57,10 +57,9 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
         setFocusable(true);
         setFocusableInTouchMode(true);
         setLongClickable(true);
-        //this.setOnTouchListener(this);
+
     	thread = new ArtificialHorizonLoopThread(this);
         getHolder().addCallback(new SurfaceHolder.Callback() {
-               //@Override
                public void surfaceDestroyed(SurfaceHolder holder) {
                       boolean retry = true;
                       thread.setRunning(false);
@@ -71,13 +70,12 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
                              } catch (InterruptedException e) {}
                       }
                }
-               //@Override
                public void surfaceCreated(SurfaceHolder holder) {
             	   prepareVariables();
             	   thread.setRunning(true);
             	   thread.start();
 	            }
-	            //@Override
+               
 	            public void surfaceChanged(SurfaceHolder holder, int format,int width, int height) {
 	            	
 	            }
@@ -114,6 +112,7 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
     	paint.setColor(Color.RED);
     	canvas.drawRect(orientationPosition_X, orientationPosition_Z, orientationPosition_X + (int)sensorOrientation_Z, orientationPosition_Z + 10, paint);
     	
+    	//Draw all data as text
     	paint.setColor(Color.BLACK);
     	canvas.drawText("sensor X : " + sensorOrientation_X, orientationPosition_X, orientationPosition_Z + 40, paint);
     	canvas.drawText("sensor Y : " + sensorOrientation_Y, orientationPosition_X, orientationPosition_Z + 60, paint);
@@ -135,13 +134,12 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
         return super.onTouchEvent(event);		
     }
   	
-    //width -> szerokosc bitmapy podzielona przez rows
     public void drawSprite(Canvas canvas, int x, int y, int columns, int rows, int width, int height, int currentFrame, Bitmap bmp, float angle, float scale){
-    	//rotacja
+    	//save current canvas state
 		canvas.save();
+		//rotate canvas
 		canvas.rotate(angle, x, y);
-		
-		//skala
+		//scale canvas
 		canvas.scale(scale, scale, x, y);
 		
     	int srcX = 0;
@@ -160,27 +158,32 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 		Rect dst = new Rect(x - width/2, y - height/2, x + width/2, y + height/2);
 		canvas.drawBitmap(bmp, src, dst, paint);
 		
+		//restore default canvas settings
 		canvas.restore();
     }
     
     public void updateSensor(int sensor, float[] values){
-    	
     	//every second reset timmer
     	if(System.currentTimeMillis() - lastUpdate >= 1000){
+    		//update lastUpdate time
     		lastUpdate = System.currentTimeMillis();
+    		//counted frequency
     		frequency = updateCounter;
+    		//set updateCounter to 0
     		updateCounter = 0;
     	}
     	else{
     		updateCounter++;
     	}
-    	
+    	//read values from sensor
     	if (sensor == SensorManager.SENSOR_ACCELEROMETER) {
+    		//accelerometer values
     		accelerometer_X = values[0];
     		accelerometer_Y = values[1];
     		accelerometer_Z = values[2];
     	}
     	if (sensor == SensorManager.SENSOR_ORIENTATION) {
+    		//sensor orientation values
     		Log.d("ArtificialHorizon", "onSensorChanged: " + sensor + ", x: " + values[0] + ", y: " + values[1] + ", z: " + values[2]);
     		sensorOrientation_X = values[0];
     		sensorOrientation_Y = values[1];
