@@ -1,6 +1,8 @@
 package artificial.horizon.main;
 
+import java.util.ArrayList;
 import java.util.Currency;
+import java.util.List;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -18,7 +20,17 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
-
+	
+	private int FPS = 0;
+	
+	//list size
+	private static short LIST_SIZE = 5;
+	
+	//list of last sensor reads
+	private List<Float> lastX = new ArrayList<Float>();
+	private List<Float> lastY = new ArrayList<Float>();
+	private List<Float> lastZ = new ArrayList<Float>();
+	
 	//width, height scale factor (for different phones)
 	private float w_factor = 1.0f;
 	private float h_factor = 1.0f;
@@ -63,7 +75,7 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 	private Bitmap BMP_comapass;
 	private Bitmap BMP_compassPlane;
 	
-	public ArtificialHorizon(Context context, double w_factor, double h_factor) {
+	public ArtificialHorizon(Context context, double w_factor, double h_factor, final boolean quality) {
         super(context);
         
         this.lastUpdate = System.currentTimeMillis();
@@ -87,7 +99,7 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
                       }
                }
                public void surfaceCreated(SurfaceHolder holder) {
-            	   prepareVariables();
+            	   prepareVariables(quality);
             	   thread.setRunning(true);
             	   thread.start();
 	            }
@@ -98,17 +110,25 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
         }); 
     }
     
-	public void prepareVariables(){
+	public void prepareVariables(boolean quality){
 		paint = new Paint();
-		paint.setAntiAlias(true);
-		paint.setFilterBitmap(true);
-		paint.setDither(true);
+		if(quality){
+			paint.setAntiAlias(true);
+			paint.setFilterBitmap(true);
+			paint.setDither(true);
+		}
 		
 		BMP_back = BitmapFactory.decodeResource(getResources(), R.drawable.artificial_horizon_back);
 		BMP_background = BitmapFactory.decodeResource(getResources(), R.drawable.artificial_horizon_background);
 		BMP_plane = BitmapFactory.decodeResource(getResources(), R.drawable.artificial_horizon_plane);
 		BMP_comapass = BitmapFactory.decodeResource(getResources(), R.drawable.artificial_horizon_compass);
 		BMP_compassPlane = BitmapFactory.decodeResource(getResources(), R.drawable.artificial_horizon_plane_compass);
+		
+		for(int i = 0; i < LIST_SIZE; i++){
+			lastX.add(0.0f);
+			lastY.add(0.0f);
+			lastZ.add(0.0f);
+		}
 	}
 	
     @Override
@@ -124,9 +144,9 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
     	//float current_y = (sensorOrientation_Y + LAST_sensorOrientation_Y)/2;
     	//float current_z = (sensorOrientation_Z + LAST_sensorOrientation_Z)/2;
     	
-    	float current_x = sensorOrientation_X;
-    	float current_y = sensorOrientation_Y;
-    	float current_z = sensorOrientation_Z;
+    	float current_x = getAvarageX();
+    	float current_y = getAvarageY();
+    	float current_z = getAvarageZ();
     	
     	drawSprite(canvas, 240, (int)(240.0f - current_y), 1, 1, BMP_background.getWidth(), BMP_background.getHeight(), 0, BMP_background, - current_z, 1.0f);
     	
@@ -174,11 +194,13 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 	    	canvas.drawText("accelerometer Z : " + accelerometer_Z, orientationPosition_X, orientationPosition_Z + 140, paint);
 	    	
 	    	canvas.drawText("frequency : " + frequency + "Hz", orientationPosition_X, orientationPosition_Z + 160, paint);
+	    	
+	    	FPS = thread.getFPS();
+	    	if(FPS < 25) paint.setColor(Color.RED);
+	    	else if(FPS < 30) paint.setColor(Color.YELLOW);
+	    	else paint.setColor(Color.GREEN);
+	    	canvas.drawText("FPS : " + FPS, orientationPosition_X, orientationPosition_Z + 180, paint);
     	}
-    	
-    	LAST_sensorOrientation_X = sensorOrientation_X;
-    	LAST_sensorOrientation_Y = sensorOrientation_Y;
-    	LAST_sensorOrientation_Z = sensorOrientation_Z;
     }
    
     @Override
@@ -196,20 +218,11 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 		//rotate canvas
 		canvas.rotate(angle, x, y);
 		//scale canvas
-		canvas.scale(scale, scale, x, y);
+		//canvas.scale(scale, scale, x, y);
 		
     	int srcX = 0;
     	int srcY = 0;
-    	int row;
-    	srcX = (currentFrame % (columns)) * width;
-    	if(rows % 2 == 0){
-    		row = currentFrame / (rows);
-    	}
-    	else{
-    		row = currentFrame / (rows + 1);
-    	}
-        srcY = row * height;
-        
+
     	Rect src = new Rect(srcX, srcY, srcX + width, srcY + height);
 		Rect dst = new Rect(x - width/2, y - height/2, x + width/2, y + height/2);
 		canvas.drawBitmap(bmp, src, dst, paint);
@@ -240,10 +253,17 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
     	}
     	if (sensor == SensorManager.SENSOR_ORIENTATION) {
     		//sensor orientation values
-    		Log.d("ArtificialHorizon", "onSensorChanged: " + sensor + ", x: " + values[0] + ", y: " + values[1] + ", z: " + values[2]);
+    		//Log.d("ArtificialHorizon", "onSensorChanged: " + sensor + ", x: " + values[0] + ", y: " + values[1] + ", z: " + values[2]);
+    		
     		sensorOrientation_X = values[0];
     		sensorOrientation_Y = values[1];
     		sensorOrientation_Z = values[2];
+    		
+    		addSensorReads(values[0], values[1], values[2]);
+    		
+			/*sensorOrientation_X = values[0];
+    		sensorOrientation_Y = values[1];
+    		sensorOrientation_Z = values[2];*/
     	}
     }
 
@@ -253,6 +273,54 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 
 	public void setDebug(boolean debug) {
 		this.debug = debug;
+	}
+	
+	private void addSensorReads(float x, float y, float z){
+		if(lastX.size() < 1 || lastY.size() < 1 || lastZ.size() < 1){
+			Log.d("ArtificialHorizon", "ERROR! Size < 1");
+			return;
+		}
+		lastX.remove(0);
+		lastX.add(x);
+		
+		lastY.remove(0);
+		lastY.add(y);
+		
+		lastZ.remove(0);
+		lastZ.add(z);
+	}
+	
+	private float getAvarageX(){
+		float average = 0.0f;
+		
+		for(int i = 0; i < LIST_SIZE; i++){
+			average += lastX.get(i);
+		}
+		average /= LIST_SIZE;
+		
+		return average;
+	}
+	
+	private float getAvarageY(){
+		float average = 0.0f;
+		
+		for(int i = 0; i < LIST_SIZE; i++){
+			average += lastY.get(i);
+		}
+		average /= LIST_SIZE;
+		
+		return average;
+	}
+	
+	private float getAvarageZ(){
+		float average = 0.0f;
+		
+		for(int i = 0; i < LIST_SIZE; i++){
+			average += lastZ.get(i);
+		}
+		average /= LIST_SIZE;
+		
+		return average;
 	}
 }
     

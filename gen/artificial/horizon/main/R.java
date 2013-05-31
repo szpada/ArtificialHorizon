@@ -16,15 +16,15 @@ public final class R {
         public static final int artificial_horizon_compass=0x7f020002;
         public static final int artificial_horizon_plane=0x7f020003;
         public static final int artificial_horizon_plane_compass=0x7f020004;
-        public static final int ic_launcher=0x7f020005;
+        public static final int compass_base=0x7f020005;
+        public static final int ic_launcher=0x7f020006;
+        public static final int ic_launcher_android=0x7f020007;
     }
     public static final class id {
-        public static final int xbox=0x7f050000;
-        public static final int xboxo=0x7f050003;
-        public static final int ybox=0x7f050001;
-        public static final int yboxo=0x7f050004;
-        public static final int zbox=0x7f050002;
-        public static final int zboxo=0x7f050005;
+        public static final int antialiasing=0x7f050001;
+        public static final int sensor_type=0x7f050002;
+        public static final int start=0x7f050000;
+        public static final int textView1=0x7f050003;
     }
     public static final class layout {
         public static final int main=0x7f030000;

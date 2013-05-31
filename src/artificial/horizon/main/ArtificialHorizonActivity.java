@@ -9,6 +9,9 @@ import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.SensorManager;
 import android.hardware.SensorListener;
 
@@ -20,6 +23,8 @@ public class ArtificialHorizonActivity extends Activity implements SensorListene
 
     //horizon view
     private ArtificialHorizon horizon;
+    
+    private short speed = 0;
     
     /** Called when the activity is first created. */
     @Override
@@ -43,7 +48,15 @@ public class ArtificialHorizonActivity extends Activity implements SensorListene
 		// get reference to SensorManager
         sm = (SensorManager) getSystemService(SENSOR_SERVICE);
 		
-		horizon = new ArtificialHorizon(this, w_factor, h_factor);
+        boolean quality = false;
+        
+        Bundle extras = getIntent().getExtras();
+		if (extras != null) {
+			quality = extras.getBoolean("QUALITY");
+			speed = extras.getShort("SPEED");
+		}
+        
+		horizon = new ArtificialHorizon(this, w_factor, h_factor, quality);
 		setContentView(horizon);
     }
     
@@ -59,7 +72,7 @@ public class ArtificialHorizonActivity extends Activity implements SensorListene
     
     @Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		menu.add(1, 1, 0, "DEBUG").setIcon(R.drawable.artificial_horizon_plane_compass);
+		menu.add(1, 1, 0, "Debug").setIcon(R.drawable.ic_launcher_android);
 		return true;
 	}
 
@@ -69,6 +82,14 @@ public class ArtificialHorizonActivity extends Activity implements SensorListene
 			switch (item.getItemId()) {
 			case 1:
 				horizon.setDebug(!(horizon.isDebug()));
+				if(horizon.isDebug()){
+					item.setIcon(new BitmapDrawable(BitmapFactory.decodeResource(getResources(), R.drawable.compass_base)));
+					item.setTitle("Compass");
+				}
+				else{
+					item.setIcon(new BitmapDrawable(BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher_android)));
+					item.setTitle("Debug");
+				}
 				return true;
 			}
 		}
@@ -77,16 +98,28 @@ public class ArtificialHorizonActivity extends Activity implements SensorListene
     
     @Override
     protected void onResume() {
+    	int sensorSpeed = SensorManager.SENSOR_DELAY_NORMAL;
         super.onResume();
+        switch(speed){
+        case 1:
+        	sensorSpeed = SensorManager.SENSOR_DELAY_UI;
+        	break;
+        case 2:
+        	sensorSpeed = SensorManager.SENSOR_DELAY_GAME;
+        	break;
+        case 3:
+        	sensorSpeed = SensorManager.SENSOR_DELAY_FASTEST;
+        	break;
+        }
+        
         // register this class as a listener for the orientation and accelerometer sensors
-        sm.registerListener(this, 
-                SensorManager.SENSOR_ORIENTATION |SensorManager.SENSOR_ACCELEROMETER,
+        sm.registerListener(this, SensorManager.SENSOR_ORIENTATION |SensorManager.SENSOR_ACCELEROMETER, sensorSpeed
                 //sensor delay
                 //SensorManager.SENSOR_DELAY_NORMAL
         		//other options
                 	//SensorManager.SENSOR_DELAY_FASTEST
                 	//SensorManager.SENSOR_DELAY_GAME
-                	SensorManager.SENSOR_DELAY_UI
+                	//SensorManager.SENSOR_DELAY_UI
         		);	
     }
     
@@ -95,5 +128,6 @@ public class ArtificialHorizonActivity extends Activity implements SensorListene
         // unregister listener
         sm.unregisterListener(this);
         super.onStop();
+        finish();
     }    
 }

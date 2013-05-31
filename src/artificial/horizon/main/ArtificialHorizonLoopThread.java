@@ -15,6 +15,9 @@ public class ArtificialHorizonLoopThread extends Thread {
 	
 	private boolean running = false;
 
+	//current fps
+	private int CurrentFPS = 0;
+	
 	public ArtificialHorizonLoopThread(ArtificialHorizon view) {
 		this.view = view;
 	}
@@ -36,6 +39,7 @@ public class ArtificialHorizonLoopThread extends Thread {
 			long time =  System.currentTimeMillis();
 			if(contms>1000) {
 				Log.v("FPS",String.valueOf(fps));
+				CurrentFPS = fps;
 				contms=time-lasttimecheck;
 				fps=1;
 			}
@@ -70,5 +74,9 @@ public class ArtificialHorizonLoopThread extends Thread {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public int getFPS(){
+		return CurrentFPS;
 	}
 }
