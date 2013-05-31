@@ -4,6 +4,7 @@ import java.util.Currency;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -33,6 +34,11 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 	private float sensorOrientation_Y = 0.0f;
 	private float sensorOrientation_Z = 0.0f;
 	
+	//sensor orientations
+	private float LAST_sensorOrientation_X = 0.0f;
+	private float LAST_sensorOrientation_Y = 0.0f;
+	private float LAST_sensorOrientation_Z = 0.0f;
+	
 	//accelerometers
 	private float accelerometer_X = 0.0f;
 	private float accelerometer_Y = 0.0f;
@@ -46,6 +52,16 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 	
 	//update counter
 	private int updateCounter = 0;
+	
+	//debug mode
+	private boolean debug = false;
+	
+	//BITMAPS
+	private Bitmap BMP_back;
+	private Bitmap BMP_plane;
+	private Bitmap BMP_background;
+	private Bitmap BMP_comapass;
+	private Bitmap BMP_compassPlane;
 	
 	public ArtificialHorizon(Context context, double w_factor, double h_factor) {
         super(context);
@@ -84,6 +100,15 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
     
 	public void prepareVariables(){
 		paint = new Paint();
+		paint.setAntiAlias(true);
+		paint.setFilterBitmap(true);
+		paint.setDither(true);
+		
+		BMP_back = BitmapFactory.decodeResource(getResources(), R.drawable.artificial_horizon_back);
+		BMP_background = BitmapFactory.decodeResource(getResources(), R.drawable.artificial_horizon_background);
+		BMP_plane = BitmapFactory.decodeResource(getResources(), R.drawable.artificial_horizon_plane);
+		BMP_comapass = BitmapFactory.decodeResource(getResources(), R.drawable.artificial_horizon_compass);
+		BMP_compassPlane = BitmapFactory.decodeResource(getResources(), R.drawable.artificial_horizon_plane_compass);
 	}
 	
     @Override
@@ -95,34 +120,65 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
     	paint.setColor(Color.WHITE);
     	canvas.drawRect(0, 0, 480, 800, this.paint);
     	
-    	//rect positions
-    	int orientationPosition_X = 240;
-    	int orientationPosition_Y = orientationPosition_X + 180;
-    	int orientationPosition_Z = orientationPosition_Y + 180;
+    	//float current_x = (sensorOrientation_X + LAST_sensorOrientation_X)/2;
+    	//float current_y = (sensorOrientation_Y + LAST_sensorOrientation_Y)/2;
+    	//float current_z = (sensorOrientation_Z + LAST_sensorOrientation_Z)/2;
     	
-    	//X sensor rect
-    	paint.setColor(Color.BLUE);
-    	canvas.drawRect(orientationPosition_X, orientationPosition_X, orientationPosition_X + (int)sensorOrientation_X, orientationPosition_X + 10, paint);
+    	float current_x = sensorOrientation_X;
+    	float current_y = sensorOrientation_Y;
+    	float current_z = sensorOrientation_Z;
     	
-    	//Y sensor rect
-    	paint.setColor(Color.GREEN);
-    	canvas.drawRect(orientationPosition_X, orientationPosition_Y, orientationPosition_X + (int)sensorOrientation_Y, orientationPosition_Y + 10, paint);
+    	drawSprite(canvas, 240, (int)(240.0f - current_y), 1, 1, BMP_background.getWidth(), BMP_background.getHeight(), 0, BMP_background, - current_z, 1.0f);
     	
-    	//Z sensor rect
-    	paint.setColor(Color.RED);
-    	canvas.drawRect(orientationPosition_X, orientationPosition_Z, orientationPosition_X + (int)sensorOrientation_Z, orientationPosition_Z + 10, paint);
+    	drawSprite(canvas, 240, 240, 1, 1, BMP_back.getWidth(), BMP_back.getHeight(), 0, BMP_back, 0, 1.0f);
     	
-    	//Draw all data as text
-    	paint.setColor(Color.BLACK);
-    	canvas.drawText("sensor X : " + sensorOrientation_X, orientationPosition_X, orientationPosition_Z + 40, paint);
-    	canvas.drawText("sensor Y : " + sensorOrientation_Y, orientationPosition_X, orientationPosition_Z + 60, paint);
-    	canvas.drawText("sensor Z : " + sensorOrientation_Z, orientationPosition_X, orientationPosition_Z + 80, paint);
+    	drawSprite(canvas, 240, 240, 1, 1, BMP_plane.getWidth(), BMP_plane.getHeight(), 0, BMP_plane, 0, 1.0f);
     	
-    	canvas.drawText("accelerometer X : " + accelerometer_X, orientationPosition_X, orientationPosition_Z + 100, paint);
-    	canvas.drawText("accelerometer Y : " + accelerometer_Y, orientationPosition_X, orientationPosition_Z + 120, paint);
-    	canvas.drawText("accelerometer Z : " + accelerometer_Z, orientationPosition_X, orientationPosition_Z + 140, paint);
+    	paint.setColor(Color.LTGRAY);
+    	canvas.drawRect(0, 480, 480, 800, this.paint);
     	
-    	canvas.drawText("frequency : " + frequency + "Hz", orientationPosition_X, orientationPosition_Z + 160, paint);
+    	if(!debug){
+	    	drawSprite(canvas, 240, 630, 1, 1, BMP_comapass.getWidth(), BMP_comapass.getHeight(), 0, BMP_comapass, current_x, 1.0f);
+	    	
+    		drawSprite(canvas, 240, 630, 1, 1, BMP_compassPlane.getWidth(), BMP_compassPlane.getHeight(), 0, BMP_compassPlane, 0, 1.0f);
+    	}
+    	else{
+    	
+	    	//rect positions
+	    	int orientationPosition_X = 100;
+	    	int orientationPosition_Y = orientationPosition_X + 180;
+	    	int orientationPosition_Z = orientationPosition_Y + 180;
+	    	
+	    	//X sensor rect
+	    	//paint.setColor(Color.BLUE);
+	    	//canvas.drawRect(orientationPosition_X, orientationPosition_X, orientationPosition_X + (int)sensorOrientation_X, orientationPosition_X + 10, paint);
+	    	
+	    	//Y sensor rect
+	    	//paint.setColor(Color.GREEN);
+	    	//canvas.drawRect(orientationPosition_X, orientationPosition_Y, orientationPosition_X + (int)sensorOrientation_Y, orientationPosition_Y + 10, paint);
+	    	
+	    	//Z sensor rect
+	    	//paint.setColor(Color.RED);
+	    	//canvas.drawRect(orientationPosition_X, orientationPosition_Z, orientationPosition_X + (int)sensorOrientation_Z, orientationPosition_Z + 10, paint);
+	    	
+	    	//Draw all data as text
+	    	paint.setColor(Color.BLACK);
+	    	paint.setTextSize(26.0f);
+	    	
+	    	canvas.drawText("sensor X : " + sensorOrientation_X, orientationPosition_X, orientationPosition_Z + 40, paint);
+	    	canvas.drawText("sensor Y : " + sensorOrientation_Y, orientationPosition_X, orientationPosition_Z + 60, paint);
+	    	canvas.drawText("sensor Z : " + sensorOrientation_Z, orientationPosition_X, orientationPosition_Z + 80, paint);
+	    	
+	    	canvas.drawText("accelerometer X : " + accelerometer_X, orientationPosition_X, orientationPosition_Z + 100, paint);
+	    	canvas.drawText("accelerometer Y : " + accelerometer_Y, orientationPosition_X, orientationPosition_Z + 120, paint);
+	    	canvas.drawText("accelerometer Z : " + accelerometer_Z, orientationPosition_X, orientationPosition_Z + 140, paint);
+	    	
+	    	canvas.drawText("frequency : " + frequency + "Hz", orientationPosition_X, orientationPosition_Z + 160, paint);
+    	}
+    	
+    	LAST_sensorOrientation_X = sensorOrientation_X;
+    	LAST_sensorOrientation_Y = sensorOrientation_Y;
+    	LAST_sensorOrientation_Z = sensorOrientation_Z;
     }
    
     @Override
@@ -190,5 +246,13 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
     		sensorOrientation_Z = values[2];
     	}
     }
+
+	public boolean isDebug() {
+		return debug;
+	}
+
+	public void setDebug(boolean debug) {
+		this.debug = debug;
+	}
 }
     

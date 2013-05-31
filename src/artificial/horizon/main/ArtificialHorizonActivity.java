@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -43,7 +45,6 @@ public class ArtificialHorizonActivity extends Activity implements SensorListene
 		
 		horizon = new ArtificialHorizon(this, w_factor, h_factor);
 		setContentView(horizon);
-
     }
     
     public void onSensorChanged(int sensor, float[] values) {
@@ -57,17 +58,35 @@ public class ArtificialHorizonActivity extends Activity implements SensorListene
     }
     
     @Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		menu.add(1, 1, 0, "DEBUG").setIcon(R.drawable.artificial_horizon_plane_compass);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if(horizon != null){
+			switch (item.getItemId()) {
+			case 1:
+				horizon.setDebug(!(horizon.isDebug()));
+				return true;
+			}
+		}
+		return super.onOptionsItemSelected(item);
+	}
+    
+    @Override
     protected void onResume() {
         super.onResume();
         // register this class as a listener for the orientation and accelerometer sensors
         sm.registerListener(this, 
                 SensorManager.SENSOR_ORIENTATION |SensorManager.SENSOR_ACCELEROMETER,
                 //sensor delay
-                SensorManager.SENSOR_DELAY_NORMAL
+                //SensorManager.SENSOR_DELAY_NORMAL
         		//other options
                 	//SensorManager.SENSOR_DELAY_FASTEST
                 	//SensorManager.SENSOR_DELAY_GAME
-                	//SensorManager.SENSOR_DELAY_UI
+                	SensorManager.SENSOR_DELAY_UI
         		);	
     }
     
