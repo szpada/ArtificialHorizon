@@ -79,4 +79,8 @@ public class ArtificialHorizonLoopThread extends Thread {
 	public int getFPS(){
 		return CurrentFPS;
 	}
+
+	public long getFPSSet() {
+		return FPS;
+	}
 }

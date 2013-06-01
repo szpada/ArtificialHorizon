@@ -3,12 +3,12 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" >
-
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="10dp" >
-
+
         <ImageButton
             android:id="@+id/start"
             android:layout_width="102dp"
@@ -17,15 +17,7 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentRight="true"
             android:layout_below="@+id/antialiasing"
-            android:layout_marginBottom="34dp"
             android:src="@drawable/artificial_horizon_compass" />
-
-        <SeekBar
-            android:id="@+id/sensor_type"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:max="3" android:progress="1"/>
 
         <TextView
             android:id="@+id/textView1"
@@ -35,14 +27,88 @@
             android:layout_centerHorizontal="true"
             android:text="Sensor speed"
             android:textAppearance="?android:attr/textAppearanceLarge" />
-
+
+        <SeekBar
+            android:id="@+id/sensor_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/textView1"
+            android:layout_marginTop="14dp"
+            android:max="3"
+            android:progress="1" />
+
+        <SeekBar
+            android:id="@+id/smoothness"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/sensor_type"
+            android:layout_marginTop="66dp"
+            android:max="10"
+            android:progress="5" />
+
         <CheckBox
             android:id="@+id/antialiasing"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
-            android:layout_below="@+id/textView1"
+            android:layout_centerVertical="true"
             android:text="Antialiasing" />
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/smoothness"
+            android:layout_alignParentLeft="true"
+            android:text="Sharp"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <TextView
+            android:id="@+id/textView5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/smoothness"
+            android:layout_alignParentLeft="true"
+            android:text="Slow"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignTop="@+id/smoothness"
+            android:text="Smooth"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <TextView
+            android:id="@+id/textView6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/smoothness"
+            android:layout_alignParentRight="true"
+            android:text="Fast"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <TextView
+            android:id="@+id/textView4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/textView2"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="14dp"
+            android:text="Horizon move"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <CheckBox
+            android:id="@+id/filtering"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/start"
+            android:layout_alignParentRight="true"
+            android:text="Bitmap filtering" />
 
     </RelativeLayout>
 

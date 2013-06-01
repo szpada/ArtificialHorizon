@@ -22,9 +22,16 @@ public final class R {
     }
     public static final class id {
         public static final int antialiasing=0x7f050001;
-        public static final int sensor_type=0x7f050002;
+        public static final int filtering=0x7f05000a;
+        public static final int sensor_type=0x7f050003;
+        public static final int smoothness=0x7f050004;
         public static final int start=0x7f050000;
-        public static final int textView1=0x7f050003;
+        public static final int textView1=0x7f050002;
+        public static final int textView2=0x7f050007;
+        public static final int textView3=0x7f050005;
+        public static final int textView4=0x7f050009;
+        public static final int textView5=0x7f050006;
+        public static final int textView6=0x7f050008;
     }
     public static final class layout {
         public static final int main=0x7f030000;

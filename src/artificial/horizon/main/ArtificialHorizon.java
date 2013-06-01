@@ -14,6 +14,7 @@ import android.graphics.Rect;
 import android.hardware.Sensor;
 import android.hardware.SensorListener;
 import android.hardware.SensorManager;
+import android.provider.ContactsContract.CommonDataKinds.Event;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -21,10 +22,14 @@ import android.view.SurfaceView;
 
 public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 	
+	//current fps
 	private int FPS = 0;
 	
+	//plane position Y
+	private int planePositionY = 250;
+	
 	//list size
-	private static short LIST_SIZE = 5;
+	private short LIST_SIZE;
 	
 	//list of last sensor reads
 	private List<Float> lastX = new ArrayList<Float>();
@@ -40,16 +45,13 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 	
 	//paint for drawing everything
 	private Paint paint = null;
+	//paint for text
+	private Paint Textpaint = null;
 	
 	//sensor orientations
 	private float sensorOrientation_X = 0.0f;
 	private float sensorOrientation_Y = 0.0f;
 	private float sensorOrientation_Z = 0.0f;
-	
-	//sensor orientations
-	private float LAST_sensorOrientation_X = 0.0f;
-	private float LAST_sensorOrientation_Y = 0.0f;
-	private float LAST_sensorOrientation_Z = 0.0f;
 	
 	//accelerometers
 	private float accelerometer_X = 0.0f;
@@ -75,13 +77,15 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 	private Bitmap BMP_comapass;
 	private Bitmap BMP_compassPlane;
 	
-	public ArtificialHorizon(Context context, double w_factor, double h_factor, final boolean quality) {
+	public ArtificialHorizon(Context context, double w_factor, double h_factor, final boolean quality, final boolean filtering, short smoothness) {
         super(context);
         
         this.lastUpdate = System.currentTimeMillis();
         this.h_factor = (float)h_factor;
 	   	this.w_factor = (float)w_factor;
         
+	   	LIST_SIZE = smoothness;
+	   	
         setFocusable(true);
         setFocusableInTouchMode(true);
         setLongClickable(true);
@@ -99,7 +103,7 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
                       }
                }
                public void surfaceCreated(SurfaceHolder holder) {
-            	   prepareVariables(quality);
+            	   prepareVariables(quality, filtering);
             	   thread.setRunning(true);
             	   thread.start();
 	            }
@@ -110,13 +114,14 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
         }); 
     }
     
-	public void prepareVariables(boolean quality){
+	public void prepareVariables(boolean quality, boolean filtering){
 		paint = new Paint();
-		if(quality){
-			paint.setAntiAlias(true);
-			paint.setFilterBitmap(true);
-			paint.setDither(true);
-		}
+		Textpaint = new Paint();
+		Textpaint.setTextSize(26.0f);
+		Textpaint.setAntiAlias(true);
+		
+		if(quality) paint.setAntiAlias(true);
+		if(filtering) paint.setFilterBitmap(true);
 		
 		BMP_back = BitmapFactory.decodeResource(getResources(), R.drawable.artificial_horizon_back);
 		BMP_background = BitmapFactory.decodeResource(getResources(), R.drawable.artificial_horizon_background);
@@ -129,6 +134,9 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 			lastY.add(0.0f);
 			lastZ.add(0.0f);
 		}
+		Log.d("ArtificialHorizon", "ListSizeX : " + lastX.size());
+		Log.d("ArtificialHorizon", "ListSizeY : " + lastY.size());
+		Log.d("ArtificialHorizon", "ListSizeZ : " + lastZ.size());
 	}
 	
     @Override
@@ -148,11 +156,11 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
     	float current_y = getAvarageY();
     	float current_z = getAvarageZ();
     	
-    	drawSprite(canvas, 240, (int)(240.0f - current_y), 1, 1, BMP_background.getWidth(), BMP_background.getHeight(), 0, BMP_background, - current_z, 1.0f);
+    	drawSprite(canvas, 240, (int)(250.0f - current_y), 1, 1, BMP_background.getWidth(), BMP_background.getHeight(), 0, BMP_background, - current_z, 1.0f);
     	
     	drawSprite(canvas, 240, 240, 1, 1, BMP_back.getWidth(), BMP_back.getHeight(), 0, BMP_back, 0, 1.0f);
     	
-    	drawSprite(canvas, 240, 240, 1, 1, BMP_plane.getWidth(), BMP_plane.getHeight(), 0, BMP_plane, 0, 1.0f);
+    	drawSprite(canvas, 240, planePositionY, 1, 1, BMP_plane.getWidth(), BMP_plane.getHeight(), 0, BMP_plane, 0, 1.0f);
     	
     	paint.setColor(Color.LTGRAY);
     	canvas.drawRect(0, 480, 480, 800, this.paint);
@@ -167,7 +175,7 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 	    	//rect positions
 	    	int orientationPosition_X = 100;
 	    	int orientationPosition_Y = orientationPosition_X + 180;
-	    	int orientationPosition_Z = orientationPosition_Y + 180;
+	    	int orientationPosition_Z = orientationPosition_Y + 220;
 	    	
 	    	//X sensor rect
 	    	//paint.setColor(Color.BLUE);
@@ -182,24 +190,26 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 	    	//canvas.drawRect(orientationPosition_X, orientationPosition_Z, orientationPosition_X + (int)sensorOrientation_Z, orientationPosition_Z + 10, paint);
 	    	
 	    	//Draw all data as text
-	    	paint.setColor(Color.BLACK);
-	    	paint.setTextSize(26.0f);
+	    	Textpaint.setColor(Color.BLACK);
 	    	
-	    	canvas.drawText("sensor X : " + sensorOrientation_X, orientationPosition_X, orientationPosition_Z + 40, paint);
-	    	canvas.drawText("sensor Y : " + sensorOrientation_Y, orientationPosition_X, orientationPosition_Z + 60, paint);
-	    	canvas.drawText("sensor Z : " + sensorOrientation_Z, orientationPosition_X, orientationPosition_Z + 80, paint);
+	    	canvas.drawText("sensor X : " + sensorOrientation_X, orientationPosition_X, orientationPosition_Z + 40, Textpaint);
+	    	canvas.drawText("sensor Y : " + sensorOrientation_Y, orientationPosition_X, orientationPosition_Z + 60, Textpaint);
+	    	canvas.drawText("sensor Z : " + sensorOrientation_Z, orientationPosition_X, orientationPosition_Z + 80, Textpaint);
 	    	
-	    	canvas.drawText("accelerometer X : " + accelerometer_X, orientationPosition_X, orientationPosition_Z + 100, paint);
-	    	canvas.drawText("accelerometer Y : " + accelerometer_Y, orientationPosition_X, orientationPosition_Z + 120, paint);
-	    	canvas.drawText("accelerometer Z : " + accelerometer_Z, orientationPosition_X, orientationPosition_Z + 140, paint);
+	    	canvas.drawText("accelerometer X : " + accelerometer_X, orientationPosition_X, orientationPosition_Z + 100, Textpaint);
+	    	canvas.drawText("accelerometer Y : " + accelerometer_Y, orientationPosition_X, orientationPosition_Z + 120, Textpaint);
+	    	canvas.drawText("accelerometer Z : " + accelerometer_Z, orientationPosition_X, orientationPosition_Z + 140, Textpaint);
 	    	
-	    	canvas.drawText("frequency : " + frequency + "Hz", orientationPosition_X, orientationPosition_Z + 160, paint);
+	    	canvas.drawText("frequency : " + frequency + "Hz", orientationPosition_X, orientationPosition_Z + 160, Textpaint);
 	    	
 	    	FPS = thread.getFPS();
-	    	if(FPS < 25) paint.setColor(Color.RED);
-	    	else if(FPS < 30) paint.setColor(Color.YELLOW);
-	    	else paint.setColor(Color.GREEN);
-	    	canvas.drawText("FPS : " + FPS, orientationPosition_X, orientationPosition_Z + 180, paint);
+	    	if(FPS < 25) Textpaint.setColor(Color.RED);
+	    	else if(FPS < 30) Textpaint.setColor(Color.YELLOW);
+	    	else Textpaint.setColor(Color.GREEN);
+	    	canvas.drawText("FPS : " + FPS, orientationPosition_X, orientationPosition_Z + 185, Textpaint);
+	    	
+	    	Textpaint.setColor(Color.BLACK);
+	    	canvas.drawText("(" + thread.getFPSSet() + ")", orientationPosition_X + 100, orientationPosition_Z + 185, Textpaint);
     	}
     }
    
@@ -209,6 +219,12 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
     	float x = event.getX(touchInd)/ this.w_factor;
         float y = event.getY(touchInd) / this.h_factor;
     	
+        if(event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE){
+	        planePositionY += y - 240;
+	        
+	        if(planePositionY > 300) planePositionY = 300;
+	        else if(planePositionY < 180) planePositionY = 180;
+        }
         return super.onTouchEvent(event);		
     }
   	
@@ -276,21 +292,23 @@ public class ArtificialHorizon extends SurfaceView {//implements SensorListener{
 	}
 	
 	private void addSensorReads(float x, float y, float z){
+		//Log.d("ArtificialHorizon", "addSensorReads");
 		if(lastX.size() < 1 || lastY.size() < 1 || lastZ.size() < 1){
 			Log.d("ArtificialHorizon", "ERROR! Size < 1");
 			return;
 		}
-		lastX.remove(0);
 		lastX.add(x);
+		lastX.remove(0);
 		
-		lastY.remove(0);
 		lastY.add(y);
+		lastY.remove(0);
 		
-		lastZ.remove(0);
 		lastZ.add(z);
+		lastZ.remove(0);
 	}
 	
 	private float getAvarageX(){
+		//Log.d("ArtificialHorizon", "getAverage");
 		float average = 0.0f;
 		
 		for(int i = 0; i < LIST_SIZE; i++){

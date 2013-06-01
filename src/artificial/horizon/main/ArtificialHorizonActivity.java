@@ -48,15 +48,19 @@ public class ArtificialHorizonActivity extends Activity implements SensorListene
 		// get reference to SensorManager
         sm = (SensorManager) getSystemService(SENSOR_SERVICE);
 		
+        boolean filtering = false;
         boolean quality = false;
+        short smoothness = 5;
         
         Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			quality = extras.getBoolean("QUALITY");
+			filtering = extras.getBoolean("FILTER");
 			speed = extras.getShort("SPEED");
+			smoothness = extras.getShort("SMOOTHNESS");
 		}
         
-		horizon = new ArtificialHorizon(this, w_factor, h_factor, quality);
+		horizon = new ArtificialHorizon(this, w_factor, h_factor, quality, filtering, smoothness);
 		setContentView(horizon);
     }
     
